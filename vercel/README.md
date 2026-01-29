@@ -9,3 +9,8 @@ This folder contains a serverless version of the app for Vercel.
 3. Deploy.
 
 The frontend is static in `public/`, and the API is in `api/`.
+
+## If you deploy from repo root
+
+You can deploy from the repository root using the `vercel.json` file.
+In that case, you don't need to set Root Directory.
