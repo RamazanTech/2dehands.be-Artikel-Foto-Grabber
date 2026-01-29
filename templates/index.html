@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8">
+    <title>2dehands Foto Grabber</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  </head>
+  <body>
+    <main class="container">
+      <h1>2dehands Foto Grabber</h1>
+      <p class="subtitle">Plak een 2dehands link en selecteer de foto's die je wilt downloaden.</p>
+
+      <form class="card" method="post" action="{{ url_for('grab') }}">
+        <label>
+          Listing URL
+          <input
+            type="url"
+            name="url"
+            placeholder="https://www.2dehands.be/v/..."
+            value="{{ url or '' }}"
+            required
+          >
+        </label>
+        <button type="submit">Foto's ophalen</button>
+      </form>
+
+      {% if error %}
+      <div class="alert error">{{ error }}</div>
+      {% endif %}
+
+      {% if images %}
+      <form class="card results" method="post" action="{{ url_for('download') }}">
+        <div class="results-header">
+          <div>
+            <h2>Gevonden foto's</h2>
+            <p>{{ total_candidates }} foto's gevonden. Selecteer welke je wilt downloaden.</p>
+            <p class="muted">Geselecteerd: <span id="selected-count">0</span></p>
+          </div>
+          <div class="action-buttons">
+            <button type="button" onclick="selectAll()" class="button secondary">Selecteer alles</button>
+            <button type="button" onclick="deselectAll()" class="button secondary">Deselecteer alles</button>
+            <button type="submit" class="button primary">Download geselecteerde</button>
+          </div>
+        </div>
+        <div class="grid">
+          {% for image in images %}
+          <label class="thumb-selectable">
+            <input type="checkbox" name="selected" value="{{ image.index }}">
+            <div class="thumb-image">
+              <img src="{{ image.url }}" alt="Foto {{ image.index + 1 }}" loading="lazy">
+            </div>
+            <figcaption>Foto {{ image.index + 1 }}</figcaption>
+          </label>
+          {% endfor %}
+        </div>
+      </form>
+      {% endif %}
+
+      {% if downloaded_images %}
+      <section class="card results">
+        <div class="results-header">
+          <div>
+            <h2>Gedownload</h2>
+            <p>{{ downloaded_count }} foto's succesvol gedownload.</p>
+            {% if output_dir %}
+            <p class="muted">Opslag: {{ output_dir }}</p>
+            {% endif %}
+          </div>
+          <a class="button secondary" href="{{ zip_url }}">Download alles (zip)</a>
+        </div>
+        <div class="grid">
+          {% for image in downloaded_images %}
+          <figure class="thumb">
+            <a href="{{ image.url }}" target="_blank" rel="noopener">
+              <img src="{{ image.url }}" alt="{{ image.name }}">
+            </a>
+            <figcaption>{{ image.name }}</figcaption>
+          </figure>
+          {% endfor %}
+        </div>
+      </section>
+      {% endif %}
+    </main>
+
+    <script>
+      function updateSelectedCount() {
+        const checkboxes = document.querySelectorAll('input[name="selected"]');
+        let count = 0;
+        checkboxes.forEach(cb => {
+          if (cb.checked) count += 1;
+        });
+        const counter = document.getElementById('selected-count');
+        if (counter) counter.textContent = count;
+      }
+
+      function selectAll() {
+        document.querySelectorAll('input[name="selected"]').forEach(cb => cb.checked = true);
+        updateSelectedCount();
+      }
+      function deselectAll() {
+        document.querySelectorAll('input[name="selected"]').forEach(cb => cb.checked = false);
+        updateSelectedCount();
+      }
+
+      document.addEventListener('change', event => {
+        if (event.target && event.target.name === 'selected') {
+          updateSelectedCount();
+        }
+      });
+
+      document.addEventListener('DOMContentLoaded', updateSelectedCount);
+    </script>
+  </body>
+</html>

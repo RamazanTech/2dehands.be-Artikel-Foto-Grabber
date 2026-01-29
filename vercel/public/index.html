@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="utf-8">
+    <title>2dehands Foto Grabber</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="container">
+      <h1>2dehands Foto Grabber</h1>
+      <p class="subtitle">Plak een 2dehands link en selecteer de foto's die je wilt downloaden.</p>
+
+      <form id="grab-form" class="card">
+        <label>
+          Listing URL
+          <input
+            id="listing-url"
+            type="url"
+            name="url"
+            placeholder="https://www.2dehands.be/v/..."
+            required
+          >
+        </label>
+        <button type="submit">Foto's ophalen</button>
+      </form>
+
+      <div id="error" class="alert error hidden"></div>
+
+      <section id="results" class="card results hidden">
+        <div class="results-header">
+          <div>
+            <h2>Gevonden foto's</h2>
+            <p id="results-summary"></p>
+            <p class="muted">Geselecteerd: <span id="selected-count">0</span></p>
+          </div>
+          <div class="action-buttons">
+            <button type="button" id="select-all" class="button secondary">Selecteer alles</button>
+            <button type="button" id="deselect-all" class="button secondary">Deselecteer alles</button>
+            <button type="button" id="download-selected" class="button primary">Download geselecteerde</button>
+          </div>
+        </div>
+        <div id="image-grid" class="grid"></div>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
