@@ -90,8 +90,16 @@ async function grabPhotos(event) {
     });
 
     if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || "Kon de foto's niet ophalen.");
+      let message = "Kon de foto's niet ophalen.";
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        const data = await response.json().catch(() => ({}));
+        if (data.error) message = data.error;
+      } else {
+        const text = await response.text().catch(() => "");
+        if (text) message = text.slice(0, 200);
+      }
+      throw new Error(message);
     }
 
     const data = await response.json();
@@ -137,8 +145,16 @@ async function downloadSelected() {
     });
 
     if (!response.ok) {
-      const data = await response.json().catch(() => ({}));
-      throw new Error(data.error || "Download mislukt.");
+      let message = "Download mislukt.";
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        const data = await response.json().catch(() => ({}));
+        if (data.error) message = data.error;
+      } else {
+        const text = await response.text().catch(() => "");
+        if (text) message = text.slice(0, 200);
+      }
+      throw new Error(message);
     }
 
     const blob = await response.blob();

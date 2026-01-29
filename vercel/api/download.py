@@ -54,59 +54,62 @@ class handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):
-        data = read_json(self)
-        urls = data.get("urls", [])
-        if not isinstance(urls, list) or not urls:
-            return send_json(self, 400, {"error": "Geen foto's geselecteerd."})
+        try:
+            data = read_json(self)
+            urls = data.get("urls", [])
+            if not isinstance(urls, list) or not urls:
+                return send_json(self, 400, {"error": "Geen foto's geselecteerd."})
 
-        sanitized = []
-        for url in urls:
-            if not isinstance(url, str):
-                continue
-            url = normalize_image_url(url)
-            if not is_allowed_image_url(url):
-                continue
-            sanitized.append(url)
-
-        sanitized = dedupe_in_order(sanitized)[:MAX_IMAGES]
-        if not sanitized:
-            return send_json(self, 400, {"error": "Geen geldige foto's gevonden."})
-
-        headers = {
-            "User-Agent": (
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/120.0 Safari/537.36"
-            )
-        }
-
-        buffer = BytesIO()
-        added = 0
-        with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zip_handle:
-            for index, url in enumerate(sanitized, start=1):
-                try:
-                    response = requests.get(url, headers=headers, timeout=30)
-                    response.raise_for_status()
-                except requests.RequestException:
+            sanitized = []
+            for url in urls:
+                if not isinstance(url, str):
                     continue
-
-                content_type = response.headers.get("Content-Type", "")
-                if content_type and not is_content_type_image(content_type):
+                url = normalize_image_url(url)
+                if not is_allowed_image_url(url):
                     continue
+                sanitized.append(url)
 
-                ext = guess_extension(url, content_type)
-                filename = f"image_{index:03d}{ext}"
-                zip_handle.writestr(filename, response.content)
-                added += 1
+            sanitized = dedupe_in_order(sanitized)[:MAX_IMAGES]
+            if not sanitized:
+                return send_json(self, 400, {"error": "Geen geldige foto's gevonden."})
 
-        if added == 0:
-            return send_json(self, 500, {"error": "Kon geen foto's downloaden."})
+            headers = {
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/120.0 Safari/537.36"
+                )
+            }
 
-        buffer.seek(0)
-        data = buffer.getvalue()
-        self.send_response(200)
-        self.send_header("Content-Type", "application/zip")
-        self.send_header("Content-Disposition", "attachment; filename=photos.zip")
-        self.send_header("Content-Length", str(len(data)))
-        self.end_headers()
-        self.wfile.write(data)
+            buffer = BytesIO()
+            added = 0
+            with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zip_handle:
+                for index, url in enumerate(sanitized, start=1):
+                    try:
+                        response = requests.get(url, headers=headers, timeout=30)
+                        response.raise_for_status()
+                    except requests.RequestException:
+                        continue
+
+                    content_type = response.headers.get("Content-Type", "")
+                    if content_type and not is_content_type_image(content_type):
+                        continue
+
+                    ext = guess_extension(url, content_type)
+                    filename = f"image_{index:03d}{ext}"
+                    zip_handle.writestr(filename, response.content)
+                    added += 1
+
+            if added == 0:
+                return send_json(self, 502, {"error": "Kon geen foto's downloaden."})
+
+            buffer.seek(0)
+            data = buffer.getvalue()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/zip")
+            self.send_header("Content-Disposition", "attachment; filename=photos.zip")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+        except Exception as exc:
+            return send_json(self, 500, {"error": f"Server error: {exc}"})
