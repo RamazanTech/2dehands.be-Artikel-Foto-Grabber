@@ -29,3 +29,7 @@ python grab_2dehands_photos.py "https://www.2dehands.be/v/..." --out downloads/m
 ```
 
 Downloads are saved to `downloads/<listing-slug>` by default.
+
+## Vercel (gratis)
+
+De serverless versie staat in `vercel/`. Bekijk `vercel/README.md` voor deploy‑stappen.
